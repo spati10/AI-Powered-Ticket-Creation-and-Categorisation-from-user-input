@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Support Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=JetBrains+Mono&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #818cf8;
+            --primary-hover: #6366f1;
+            --bg-dark: #0f172a;
+            --card-bg: #1e293b; /* Dark Slate Background for the ticket */
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border-color: #334155;
+        }
+
+        * { box-sizing: border-box; font-family: 'Inter', sans-serif; }
+
+        body {
+            background: var(--bg-dark);
+            background-image: radial-gradient(circle at 2px 2px, #334155 1px, transparent 0);
+            background-size: 40px 40px;
+            min-height: 100vh;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: var(--text-main);
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: 380px 1fr;
+            gap: 30px;
+            width: 95%;
+            max-width: 1100px;
+            height: 550px;
+        }
+
+        /* LEFT PANEL */
+        .input-panel {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            padding: 40px 30px;
+            border-radius: 24px;
+            border: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        h1 { font-size: 22px; margin: 0 0 10px 0; letter-spacing: -0.5px; }
+        .subtitle { font-size: 13px; color: var(--text-muted); margin-bottom: 25px; line-height: 1.5; }
+
+        textarea {
+            flex-grow: 1;
+            width: 100%;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 15px;
+            color: white;
+            resize: none;
+            font-size: 14px;
+            outline: none;
+            margin-bottom: 20px;
+            transition: border-color 0.3s;
+        }
+
+        textarea:focus { border-color: var(--primary); }
+
+        button {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 14px;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        button:hover { background: var(--primary-hover); transform: translateY(-1px); }
+
+        /* RIGHT PANEL: GENERATED TICKET */
+        .display-panel {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            perspective: 1000px;
+        }
+
+        .placeholder-text { color: var(--text-muted); text-align: center; }
+
+        .ticket-card {
+            display: none;
+            width: 100%;
+            max-width: 500px;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 35px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
+            animation: slideIn 0.6s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: rotateY(10deg) translateX(50px); }
+            to { opacity: 1; transform: rotateY(0) translateX(0); }
+        }
+
+        .ticket-header {
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 20px;
+            margin-bottom: 25px;
+        }
+
+        .id-label { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--primary); margin-bottom: 4px; display: block; }
+        .id-value { font-family: 'JetBrains Mono', monospace; font-size: 20px; font-weight: 700; color: #fff; }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+        }
+
+        .info-box label {
+            display: block;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+        }
+
+        .info-box span { font-weight: 600; font-size: 15px; }
+
+        /* Status & Priority styling */
+        .status-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: #4ade80;
+        }
+        .pulse {
+            width: 8px; height: 8px; background: #4ade80; border-radius: 50%;
+            box-shadow: 0 0 0 rgba(74, 222, 128, 0.4);
+            animation: pulse-green 2s infinite;
+        }
+        @keyframes pulse-green {
+            0% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(74, 222, 128, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0); }
+        }
+
+        .prio-medium { color: #fbbf24; }
+        .prio-high { color: #f87171; }
+        .prio-low { color: #60a5fa; }
+
+        .timestamp {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border-color);
+            font-size: 12px;
+            color: var(--text-muted);
+            text-align: right;
+        }
+    </style>
+</head>
+<body>
+
+<div class="dashboard">
+    <div class="input-panel">
+        <h1>AI Ticket Portal</h1>
+        <div class="subtitle">Enter issue details. Our model will determine category, priority, and routing automatically.</div>
+        
+        <textarea id="ticketText" placeholder="Describe the technical issue..."></textarea>
+        
+        <button onclick="createTicket()">Analyze & Generate Ticket</button>
+    </div>
+
+    <div class="display-panel" id="displayPanel">
+        <div class="placeholder-text" id="placeholder">
+            <p>Result will be displayed here after analysis.</p>
+        </div>
+
+        <div class="ticket-card" id="ticketCard">
+            <div class="ticket-header">
+                <span class="id-label">TICKET REFERENCE</span>
+                <span class="id-value" id="tid">70f5bd21</span>
+            </div>
+
+            <div class="info-grid">
+                <div class="info-box">
+                    <label>Category</label>
+                    <span id="category">Product Support</span>
+                </div>
+                <div class="info-box">
+                    <label>Priority</label>
+                    <span id="priority" class="prio-medium">Medium</span>
+                </div>
+                <div class="info-box">
+                    <label>Status</label>
+                    <div class="status-tag">
+                        <div class="pulse"></div>
+                        <span id="status">Open</span>
+                    </div>
+                </div>
+                <div class="info-box">
+                    <label>Assignment</label>
+                    <span>Auto-Routed</span>
+                </div>
+            </div>
+
+            <div class="timestamp">
+                Created: <span id="created">2025-12-23 21:22:29</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+async function createTicket() {
+    const text = document.getElementById("ticketText").value.trim();
+    if (!text) { alert("Please enter a description."); return; }
+
+    try {
+        const response = await fetch("/create_ticket", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({ text })
+        });
+
+        const data = await response.json();
+
+        // Map Data to UI
+        document.getElementById("tid").innerText = data.ticket_id;
+        document.getElementById("category").innerText = data.category;
+        document.getElementById("status").innerText = data.status;
+        document.getElementById("created").innerText = data.created_at;
+        
+        const prioEl = document.getElementById("priority");
+        prioEl.innerText = data.priority;
+        
+        // Dynamic Priority Coloring
+        prioEl.className = ""; // Reset
+        const p = data.priority.toLowerCase();
+        if(p.includes('high')) prioEl.classList.add('prio-high');
+        else if(p.includes('medium')) prioEl.classList.add('prio-medium');
+        else prioEl.classList.add('prio-low');
+
+        // Toggle Views
+        document.getElementById("placeholder").style.display = "none";
+        document.getElementById("ticketCard").style.display = "block";
+
+    } catch (e) {
+        console.error("Connection error - using dummy data for preview");
+        // For demonstration purposes if your backend isn't connected yet:
+        document.getElementById("placeholder").style.display = "none";
+        document.getElementById("ticketCard").style.display = "block";
+    }
+}
+</script>
+
+</body>
+</html>
